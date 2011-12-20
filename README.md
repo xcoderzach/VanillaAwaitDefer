@@ -20,6 +20,11 @@ await (defer) ->
 
 , ({userOneLoggedIn, userTwoLoggedIn, userOneCredentials, userTwoCredentials}) ->
   # We have all of the things we set!
+
+#a slightly shorter syntax, for the case where you only want to wait for one thing
+awaitOne (d) -> getUserCredentials d(), (loggedIn, credentials) ->
+  # use the variables here
+ 
 ```
 
 ## Run the tests

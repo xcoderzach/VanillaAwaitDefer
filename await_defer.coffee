@@ -1,4 +1,4 @@
-await = module.exports = (cbBefore, cbAfter) ->
+module.exports.await = (cbBefore, cbAfter) ->
   defers = 0
   deferedArguments = {}
   
@@ -16,3 +16,10 @@ await = module.exports = (cbBefore, cbAfter) ->
   # In case no defer methods were called inside our first callback
   if defers == 0
     cbAfter()
+
+module.exports.awaitOne = (cbBefore, cbAfter) ->
+  defer = () ->
+    return ->
+      cbAfter.apply(null, arguments)
+
+  cbBefore(defer)

@@ -1,5 +1,5 @@
 require("should")
-await = require("../await_defer")
+{await, awaitOne} = require("../await_defer")
 
 getUserCredentials = (cb) ->
   #simulate async
@@ -37,4 +37,17 @@ describe "await defer", ->
       userTwoLoggedIn.should.equal(true)
       userTwoCredentials.name.should.equal("Zach Smith")
 
+      done()
+
+describe "awaitOne", ->
+  it "should call the second callback with arguments pass when it's done", (done) ->
+
+    awaitOne (defer) ->
+
+      getUserCredentials defer()
+
+    , (loggedIn, credentials) ->
+
+      loggedIn.should.equal(true)
+      credentials.name.should.equal("Zach Smith")
       done()
