@@ -1,10 +1,36 @@
 require("should")
-{await, awaitOne} = require("../await_defer")
+{await, awaitOne, serialAwait} = require("../await_defer")
+
+database =
+  "Zach": {id:1}
+  "Eugene": {id:2}
+  "Chad": {id:3}
+  "Brian": {id:4}
+
+# So lazy!
+databaseById =
+  1: {image:"zach.jpg", posts: 2}
+  2: {image:"eugene.jpg", posts: 4}
+  3: {image:"chad.jpg", posts: 3}
+  4: {image:"brian.jpg", posts: 8}
 
 getUserCredentials = (cb) ->
   #simulate async
   process.nextTick () ->
     cb(true, {name: "Zach Smith"})
+
+getIdFromName = (name, cb) ->
+  process.nextTick () ->
+    cb(database[name].id)
+
+getUserImageFromId = (id, cb) ->
+  process.nextTick () ->
+    cb(databaseById[id].image)
+
+getUserPostCountFromId = (id, cb) ->
+  process.nextTick () ->
+    cb(databaseById[id].posts)
+    cb(100)
 
 describe "await defer", ->
   it "should set values from defer calls", (done) ->
@@ -51,3 +77,24 @@ describe "awaitOne", ->
       loggedIn.should.equal(true)
       credentials.name.should.equal("Zach Smith")
       done()
+
+describe "serialAwait", () ->
+  it "should stuff", (done) ->
+    called = 0
+    for name in ["Zach", "Chad", "Eugene", "Brian"]
+      do (name) ->
+        sawait = serialAwait()
+        sawait (defer) ->
+          getIdFromName(name, defer("id"))
+        sawait ({id}, defer) ->
+          getUserImageFromId id, defer("userImage")
+          getUserPostCountFromId id, defer("postCount")
+        , ({id, userImage, postCount}) ->
+
+          id.should.equal database[name].id
+          userImage.should.equal databaseById[id].image
+          postCount.should.equal databaseById[id].posts
+
+          called += 1
+          if called == 4
+            done()

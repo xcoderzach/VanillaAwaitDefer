@@ -1,4 +1,4 @@
-module.exports.await = (cbBefore, cbAfter) ->
+module.exports.await = await = (cbBefore, cbAfter) ->
   defers = 0
   deferedArguments = {}
   
@@ -23,3 +23,33 @@ module.exports.awaitOne = (cbBefore, cbAfter) ->
       cbAfter.apply(null, arguments)
 
   cbBefore(defer)
+
+module.exports.serialAwait = () ->
+  awaits = []
+  first = true
+  deferedArguments = {}
+  sawait = (cbBefore, cbAfter) ->
+    awaits.push
+      before: (defer) ->
+        #the first callback won't have a hash of arguments
+        if first
+          first = false
+          cbBefore(defer)
+        else
+          cbBefore(deferedArguments, defer)
+      after: (args) ->
+        #first copy all of the new values onto the old ones
+        deferedArguments[key] = val for key, val of args
+        # if this is the last await on the chain
+        next = awaits.shift()
+        if(next)
+          { before, after } = next
+          #call teh next one in the line
+          await(before, after)
+        else
+          cbAfter(deferedArguments)
+    if first
+      {before, after} = awaits.shift()
+      await(before, after)
+          
+  return sawait
