@@ -22,6 +22,10 @@ await (defer) ->
   # We have all of the things we set!
 ```
 
+## Run the tests
+    npm install mocha should
+    mocha test/test.coffee
+
 ## LICENSE
   MIT (see LICENSE.txt)
 
