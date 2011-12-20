@@ -20,4 +20,8 @@ await (defer) ->
 
 , ({userOneLoggedIn, userTwoLoggedIn, userOneCredentials, userTwoCredentials}) ->
   # We have all of the things we set!
+```
+
+## LICENSE
+  MIT (see LICENSE.txt)
 
