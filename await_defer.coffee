@@ -1,6 +1,6 @@
 module.exports.unnestName = unnestName = (object, name, value) ->
-  baseName = name.match(/^([a-z0-9\-_]+)\[/i)[1]
-  nestings = name.match(/(\[([a-z0-9]+)\])/gi)
+  baseName = name.match(/^([a-z0-9\-_]+)(?:\[|$)/i)[1]
+  nestings = name.match(/(\[([a-z0-9]+)\])/gi) || []
   top = object
   nestings.unshift "[" + baseName + "]"
   for i in [0...nestings.length]
@@ -19,8 +19,6 @@ module.exports.unnestName = unnestName = (object, name, value) ->
       top = top[key]
   return object
 
-  
-
 
 module.exports.await = await = (cbBefore, cbAfter) ->
   defers = 0
@@ -31,7 +29,7 @@ module.exports.await = await = (cbBefore, cbAfter) ->
     argNames = arguments
     return () ->
       for i in [0...argNames.length]
-        deferedArguments[argNames[i]] = arguments[i]
+        deferedArguments = unnestName(deferedArguments, argNames[i], arguments[i])
       defers -= 1
       if defers == 0
         cbAfter(deferedArguments)

@@ -1,19 +1,19 @@
-{serialAwait} = require("../await_defer")
+{serialAwait} = require("./await_defer")
 class Recommender
 
   getRecommendations: (search_params, cb) ->
-
-    await = serialAwait()
 
     # Do 2 things at once:
     #  - check if we have a logged in user, get their info
     #  - fire off distributed requests for search queries
     # ------------------------------------------------------------------------
 
-    await (defer) ->
+    await = serialAwait()
+
+    await (defer) =>
       @isLoggedIn defer "logged_in", "user_info"
       for interest in search_params.interests
-        @getMetaInfo interest.text, defer interest.text
+        @getMetaInfo interest.text, defer "interest_meta[" + interest.text + "]"
 
     #
     # Do more things at once:
@@ -21,31 +21,32 @@ class Recommender
     #   - get taste profiles for each legit search interest
     # ------------------------------------------------------------------------
 
-    await (results, defer) ->
-      taste_profiles = {}
-      @getUserTasteProfile user_info.id, defer user_taste_profile if logged_in
+    await ({interest_meta, logged_in, user_info}, defer) =>
+      console.log(logged_in)
+      @getUserTasteProfile user_info.id, defer "user_taste_profile" if logged_in
       for interest, meta of interest_meta
-        @getTasteProfile meta.id, defer taste_profiles[meta.id] if meta
+        @getTasteProfile meta.id, defer "taste_profiles[" + meta.id + "]" if meta
     
 
     #
     # Get the recommendations, combining all the taste profiles
     # ------------------------------------------------------------------------
 
-    await (defer) -> @getRecsFromTasteProfiles taste_profiles, user_taste_profile, defer recommendations
+    await ({user_taste_profile, taste_profiles}, defer) =>
+      @getRecsFromTasteProfiles taste_profiles, user_taste_profile, defer "recommendations"
 
     #
     # We have recs, but just [id, score] pairs. Let's:
     #   - look up info on each interest
     #   - save that this user got these recs (if logged in)
     # ------------------------------------------------------------------------
-    #
-    await (defer) ->
+
+    await ({logged_in, user_info, recommendations}, defer) =>
       for v,i in recommendations
-        @getInfo v[0], defer full_recommendations[i]
+        @getInfo v[0], defer "full_recommendations[" + i + "]"
       @rememberRecommendations user_info.id, recommendations, defer() if logged_in
-    , () ->
-    cb full_recommendations
+    , ({full_recommendations}) ->
+      cb full_recommendations
 
   # --------------------------------------------------------------------------
 
@@ -58,7 +59,7 @@ class Recommender
   isLoggedIn: (cb) ->
     @_fakeRpc "logged_in", =>
       if Math.random() < 0.5
-        cb true,
+        cb true, 
           id: "user_id_#{Math.random()}"
           age: Math.floor(18 + 30 * Math.random())
         
@@ -112,7 +113,7 @@ class Recommender
 
 R = new Recommender()
 
-search_params =
+search_params = 
   interests: [ { text: "football", opinion: 1.23 }, { text: "basketball", opinion: 13.23 } ]
 
 start_time = Date.now()

@@ -79,7 +79,7 @@ describe "awaitOne", ->
       done()
 
 describe "serialAwait", () ->
-  it "should stuff", (done) ->
+  it "should run one await after another, but run multiple serial awaits in parallel", (done) ->
     called = 0
     for name in ["Zach", "Chad", "Eugene", "Brian"]
       do (name) ->
@@ -108,7 +108,6 @@ describe "unnestName", ->
     object = unnestName(object, "thing[1][stuff]", "w00t2")
     object.thing[0].stuff.should.equal "w00t"
     object.thing[1].stuff.should.equal "w00t2"
-
-
-
-
+  it "shouldn't mess with unnested values", ->
+    object = unnestName({}, "thing", "w00t")
+    object.thing.should.equal "w00t"
