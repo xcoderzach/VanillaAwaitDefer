@@ -1,5 +1,5 @@
 require("should")
-{await, awaitOne, serialAwait} = require("../await_defer")
+{unnestName, await, awaitOne, serialAwait} = require("../await_defer")
 
 database =
   "Zach": {id:1}
@@ -98,3 +98,17 @@ describe "serialAwait", () ->
           called += 1
           if called == 4
             done()
+
+
+describe "unnestName", ->
+  it "should nest objects", ->
+    unnestName({}, "thing[magic][stuff]", 34).should.eql({thing:{magic:{stuff:34}}})
+  it "should nest arrays", ->
+    object = unnestName({}, "thing[0][stuff]", "w00t")
+    object = unnestName(object, "thing[1][stuff]", "w00t2")
+    object.thing[0].stuff.should.equal "w00t"
+    object.thing[1].stuff.should.equal "w00t2"
+
+
+
+
