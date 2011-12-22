@@ -33,7 +33,17 @@ getUserPostCountFromId = (id, cb) ->
     cb(100)
 
 cbs = []
+ 
+callCallbacksReverseOrderSync = () ->
+  process.nextTick () ->
+    while(cbs.length)
+      cbs.pop()()
 
+callCallbacksNormalOrderSync = () ->
+  process.nextTick () ->
+    while(cbs.length)
+      cbs.shift()()
+ 
 callCallbacksReverseOrder = () ->
   process.nextTick () ->
     while(cbs.length)
@@ -100,6 +110,22 @@ describe "await defer", ->
       things.should.eql [0,1,2,3,4]
       done()
 
+  it "should not break if callbacks are syncronous", (done) ->
+    sawait = serialAwait()
+    sawait (defer) ->
+      for i in [0...5]
+        callbackMaker i, defer "things[]"
+      callCallbacksReverseOrderSync()
+    , ({things}) ->
+      things.should.eql [0,1,2,3,4]
+    sawait ({}, defer) ->
+      for i in [0...5]
+        callbackMaker i, defer "things[]"
+      callCallbacksNormalOrderSync()
+    , ({things}) ->
+      things.should.eql [0,1,2,3,4]
+      done()
+ 
 describe "awaitOne", ->
   it "should call the second callback with arguments pass when it's done", (done) ->
 
