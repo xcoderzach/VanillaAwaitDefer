@@ -111,3 +111,8 @@ describe "unnestName", ->
   it "shouldn't mess with unnested values", ->
     object = unnestName({}, "thing", "w00t")
     object.thing.should.equal "w00t"
+  it "should push values when given []", ->
+    object = {}
+    for i in [0...10]
+      object = unnestName(object, "things[]", i)
+    object.things.should.eql([0...10])

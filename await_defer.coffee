@@ -1,14 +1,17 @@
 module.exports.unnestName = unnestName = (object, name, value) ->
   baseName = name.match(/^([a-z0-9\-_]+)(?:\[|$)/i)[1]
-  nestings = name.match(/(\[([a-z0-9]+)\])/gi) || []
+  nestings = name.match(/(\[([a-z0-9]*)\])/gi) || []
   top = object
   nestings.unshift "[" + baseName + "]"
   for i in [0...nestings.length]
     key = nestings[i].slice(1, -1)
     if key.match(/^[0-9]+$/)
       key = parseInt(key)
+    # empty array brackets like things[] should push to the end of the array
+    else if key.match(/^$/) && Array.isArray(top)
+      key = top.length
     if typeof top[key] != "object"
-      if nestings[i+1]? && nestings[i+1].slice(1, -1).match(/^[0-9]+$/)
+      if nestings[i+1]? && nestings[i+1].slice(1, -1).match(/^[0-9]*$/)
         top[key] = []
       else
         top[key] = {}
@@ -18,7 +21,6 @@ module.exports.unnestName = unnestName = (object, name, value) ->
     else
       top = top[key]
   return object
-
 
 module.exports.await = await = (cbBefore, cbAfter) ->
   defers = 0

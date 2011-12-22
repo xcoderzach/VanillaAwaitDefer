@@ -1,4 +1,6 @@
 {serialAwait} = require("./await_defer")
+
+
 class Recommender
 
   getRecommendations: (search_params, cb) ->
@@ -59,7 +61,7 @@ class Recommender
   isLoggedIn: (cb) ->
     @_fakeRpc "logged_in", =>
       if Math.random() < 0.5
-        cb true, 
+        cb true,
           id: "user_id_#{Math.random()}"
           age: Math.floor(18 + 30 * Math.random())
         
