@@ -23,22 +23,38 @@ module.exports.unnestName = unnestName = (object, name, value) ->
   return object
 
 module.exports.await = await = (cbBefore, cbAfter) ->
-  defers = 0
+  defersLeft = 0
+  # keep track of total defers, in case one gets called syncronously
+  # before we reach the end
+  defersTotal = 0
   deferedArguments = {}
+  setterOperations = []
   
   defer = () ->
-    defers += 1
+    #use the total in case one was called and then immediatly returned
+    operationNumber = defersTotal
+    defersLeft += 1
+    defersTotal += 1
     argNames = arguments
+
     return () ->
-      for i in [0...argNames.length]
-        deferedArguments = unnestName(deferedArguments, argNames[i], arguments[i])
-      defers -= 1
-      if defers == 0
+      defersLeft -= 1
+      argValues = arguments
+      # we should wait to set variables until we're about to call 
+      # cbAfter, otherwise the order is random based on time
+      # for callbacks to return
+      setterOperations[operationNumber] = () ->
+        for i in [0...argNames.length]
+          deferedArguments = unnestName(deferedArguments, argNames[i], argValues[i])
+
+      if defersLeft == 0
+        for i in [0...setterOperations.length]
+          setterOperations[i]()
         cbAfter(deferedArguments)
  
   cbBefore(defer)
   # In case no defer methods were called inside our first callback
-  if defers == 0
+  if defersTotal == 0
     cbAfter()
 
 module.exports.awaitOne = (cbBefore, cbAfter) ->

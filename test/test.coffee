@@ -32,6 +32,26 @@ getUserPostCountFromId = (id, cb) ->
     cb(databaseById[id].posts)
     cb(100)
 
+cbs = []
+
+callCallbacksReverseOrder = () ->
+  process.nextTick () ->
+    while(cbs.length)
+      cbs.pop()()
+
+callCallbacksNormalOrder = () ->
+  process.nextTick () ->
+    while(cbs.length)
+      cbs.shift()()
+
+callbackMaker = (val, resultCb) ->
+  cb = () ->
+    resultCb(val)
+  cbs.push cb
+  return cb
+
+
+
 describe "await defer", ->
   it "should set values from defer calls", (done) ->
     await (defer) ->
@@ -63,6 +83,21 @@ describe "await defer", ->
       userTwoLoggedIn.should.equal(true)
       userTwoCredentials.name.should.equal("Zach Smith")
 
+      done()
+  it "should set variables from callbacks in the order they were defered", (done) ->
+    sawait = serialAwait()
+    sawait (defer) ->
+      for i in [0...5]
+        callbackMaker i, defer "things[]"
+      callCallbacksReverseOrder()
+    , ({things}) ->
+      things.should.eql [0,1,2,3,4]
+    sawait ({}, defer) ->
+      for i in [0...5]
+        callbackMaker i, defer "things[]"
+      callCallbacksNormalOrder()
+    , ({things}) ->
+      things.should.eql [0,1,2,3,4]
       done()
 
 describe "awaitOne", ->
